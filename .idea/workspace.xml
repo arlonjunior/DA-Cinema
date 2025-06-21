@@ -4,21 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b45aaa01-a317-4991-976b-ea755efdcf84" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/DA-CinemaSenseProject.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data_utils.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/dataset_.arff" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/eda.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fileARFFtoCSV.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/forecast.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/nl_query_engine.py" afterDir="false" />
-    </list>
+    <list default="true" id="b45aaa01-a317-4991-976b-ea755efdcf84" name="Changes" comment="Commit :)" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -89,6 +75,19 @@
       <option name="presentableId" value="Default" />
       <updated>1750482694405</updated>
     </task>
+    <task id="LOCAL-00001" summary="Commit :)">
+      <option name="closed" value="true" />
+      <created>1750486189555</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1750486189556</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Commit :)" />
+    <option name="LAST_COMMIT_MESSAGE" value="Commit :)" />
   </component>
 </project>
