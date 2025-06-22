@@ -1,28 +1,59 @@
 import streamlit as st
-from data_utils import load_and_preprocess_data
 from eda import run_eda
-from forecast import run_forecasting
-from nl_query_engine import run_nlq
+from forecast import run_forecast
+from recommender import run_recommender
+from cinema_performance import run_performance
+from genre_trends import run_trends
 
-st.set_page_config(page_title="CinemaSense", layout="wide")
-st.title("🍿 CinemaSense Dashboard")
 
-menu = st.sidebar.selectbox("Navigate", ["Welcome", "EDA", "Forecasting", "Ask a Question (NLQ)"])
-
-df = load_and_preprocess_data()
-
-if menu == "Welcome":
+def local_css():
     st.markdown("""
-    ### 🎥 Welcome to CinemaSense
-    A Natural Language-powered dashboard for analyzing and predicting cinema performance.
-    Use the left menu to explore different modules!
-    """)
+        <style>
+            html, body, [class*="css"]  {
+                font-family: 'Segoe UI', sans-serif;
+            }
+            h1, h2, h3 {
+                color: #08306b;
+            }
+            .stButton>button {
+                background-color: #08306b;
+                color: white;
+                font-weight: bold;
+                border-radius: 5px;
+                padding: 0.6rem 1.2rem;
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
-elif menu == "EDA":
-    run_eda(df)
 
-elif menu == "Forecasting":
-    run_forecasting(df)
+local_css()
 
-elif menu == "Ask a Question (NLQ)":
-    run_nlq(df)
+st.set_page_config(page_title="Cinema Intelligence Dashboard", layout="wide")
+st.title("Cinema Intelligence Platform")
+
+with st.sidebar:
+    st.image("cinesense_analysis_navy_2_vector.png", width=400)
+    st.markdown("### Welcome to CinemaSense Insights")
+
+menu = st.sidebar.selectbox("", [
+    "Executive Summary",
+    "Cinema & City Performance",
+    "Genre & Film Trends",
+    "Revenue Forecasting",
+    "Strategic Recommendations"
+])
+
+if menu == "Executive Summary":
+    run_eda()
+
+elif menu == "Cinema & City Performance":
+    run_performance()
+
+elif menu == "Genre & Film Trends":
+    run_trends()
+
+elif menu == "Revenue Forecasting":
+    run_forecast()
+
+elif menu == "Strategic Recommendations":
+    run_recommender()
