@@ -1,7 +1,7 @@
 [theme]
 base="light"
 primaryColor="#08306b"  # Navy blue for accents
-backgroundColor="#e6e6ea"  # Soft gray-lavender blend
+backgroundColor="#d9d9df"  # Soft gray-lavender blend
 secondaryBackgroundColor="#f2f2f5"  # Light neutral for widgets
 textColor="#1a1a1a"  # Deep charcoal for readability
 font="sans serif"
