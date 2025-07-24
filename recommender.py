@@ -1,6 +1,23 @@
+# recommender.py
+
+import re
 import streamlit as st
 import pandas as pd
+
 from utils import load_data
+from nls_utils import parse_entity
+
+def find_film_column(df: pd.DataFrame) -> str | None:
+    for pref in ("film_name", "film_title"):
+        if pref in df.columns:
+            return pref
+    for col in df.columns:
+        if re.search(r"film|movie", col, flags=re.IGNORECASE):
+            return col
+    for col in df.columns:
+        if not pd.api.types.is_numeric_dtype(df[col]):
+            return col
+    return None
 
 def run_recommender():
     st.subheader("Cast & Content Strategy Recommendations")
@@ -8,96 +25,133 @@ def run_recommender():
     df = load_data()
     df["total_sales"] = pd.to_numeric(df["total_sales"], errors="coerce")
     df["tickets_sold"] = pd.to_numeric(df["tickets_sold"], errors="coerce")
-    df["cast_top_5"] = df["cast_top_5"].astype(str)
 
-    # ========= SECTION 1: Cast Revenue Impact =========
-    with st.container():
-        st.markdown("## Cast Member Revenue Impact")
+    film_col = find_film_column(df)
+    if film_col is None:
+        st.error("Unable to locate a film/title column.")
+        return
 
-        actor_query = st.text_input("Enter actor's name (partial or full):", key="actor_search").strip().lower()
-
-        # Explode cast names
-        df_cast = df.copy()
-        df_cast["cast_top_5"] = df_cast["cast_top_5"].str.split(",")
+    # --- Explode cast ---
+    df_cast = df.copy()
+    if "cast_top_5" in df.columns:
+        df_cast["cast_top_5"] = (
+            df_cast["cast_top_5"]
+            .fillna("")
+            .astype(str)
+            .str.split(",")
+        )
         df_cast = df_cast.explode("cast_top_5")
         df_cast["cast_top_5"] = df_cast["cast_top_5"].str.strip()
-        all_actors = df_cast["cast_top_5"].dropna().unique()
+        df_cast = df_cast[df_cast["cast_top_5"] != ""]
+    else:
+        df_cast["cast_top_5"] = []
 
-        # Match actor query to available names
-        matched_actors = [actor for actor in all_actors if actor_query in actor.lower()] if actor_query else []
+    all_actors = df_cast["cast_top_5"].dropna().unique().tolist()
 
-        selected_actor = None
-        if matched_actors:
-            selected_actor = st.selectbox("Select actor name", sorted(matched_actors))
-
-        if selected_actor:
-            actor_df = df_cast[df_cast["cast_top_5"] == selected_actor]
-
-            if actor_df.empty:
-                st.warning("No films found with that actor.")
-            else:
-                avg_actor_revenue = actor_df["total_sales"].mean()
-                avg_overall_revenue = df["total_sales"].mean()
-                impact = "Above Average" if avg_actor_revenue > avg_overall_revenue else "Below Average"
-                film_column = "film_title" if "film_title" in actor_df.columns else actor_df.columns[0]
-                unique_films = actor_df[film_column].nunique()
-
-                st.markdown(f"**Actor:** `{selected_actor}`")
-                st.markdown(f"**Films Participated In:** {unique_films} out of {df[film_column].nunique()} total films")
-                st.markdown(f"**Average Revenue for Their Films:** £{avg_actor_revenue:,.2f} ({impact})")
-                st.markdown(f"**Overall Average Revenue:** £{avg_overall_revenue:,.2f}")
-
-                st.dataframe(
-                    actor_df[[film_column, "cast_top_5", "total_sales"]]
-                    .drop_duplicates()
-                    .sort_values("total_sales", ascending=False)
-                    .rename(columns={film_column: "Film Title", "cast_top_5": "Cast", "total_sales": "Total Sales (£)"})
-                    .reset_index(drop=True)
-                    .style.format({"Total Sales (£)": "£{:,.2f}"})
-                )
-
-    # ========= SECTION 2: Data-Driven Content Suggestions =========
+    # === SECTION 1: Cast Member Revenue Impact ===
     with st.container():
-        st.markdown("## Data-Driven Content Recommendations")
+        st.markdown("## Cast Member Revenue Impact (Natural Language Search)")
+        nl_actor = st.text_input("Ask about an actor, e.g. 'Revenue impact of Kevin Hart'").strip()
+        actor = parse_entity(nl_actor, all_actors)
 
-        # Top Films by Tickets Sold
-        if "film_title" in df.columns:
+        if actor:
+            actor_df = df_cast[df_cast["cast_top_5"] == actor]
+            if actor_df.empty:
+                st.warning(f"No records found for actor {actor}.")
+            else:
+                # Accurate calculations
+                total_revenue = actor_df["total_sales"].sum()
+                num_screenings = len(actor_df)
+                avg_per_screening = total_revenue / num_screenings if num_screenings else 0
+                unique_films = actor_df[film_col].nunique()
+                all_films = df[film_col].nunique()
+                overall_avg = df["total_sales"].mean()
+                impact = "Above Average" if avg_per_screening > overall_avg else "Below Average"
+
+                st.write(f"**Actor:** {actor}")
+                st.write(f"**Total Revenue from Screenings:** £{total_revenue:,.2f}")
+                st.write(f"**Screenings:** {num_screenings}")
+                st.write(f"**# Unique Films:** {unique_films} / {all_films}")
+                st.write(f"**Avg Revenue per Screening:** £{avg_per_screening:,.2f} ({impact})")
+                st.write(f"**Overall Avg per Screening:** £{overall_avg:,.2f}")
+
+                # Detail table of screenings
+                film_stats = (
+                    actor_df.groupby(["cinema_city", "cinema_name", film_col], as_index=False)["total_sales"]
+                    .sum()
+                    .sort_values("total_sales", ascending=False)
+                )
+                film_stats = film_stats.rename(columns={
+                    "cinema_city": "City",
+                    "cinema_name": "Cinema",
+                    film_col: "Film Title",
+                    "total_sales": "Total Sales (£)"
+                })
+
+                st.markdown(f"### Matched Screenings ({len(film_stats)} rows)")
+                st.dataframe(film_stats.style.format({"Total Sales (£)": "£{:,.2f}"}))
+        else:
+            st.info("No matching actor found. Try another name.")
+
+    # === SECTION 2: Content Strategy by Query ===
+    with st.container():
+        st.markdown("## Data-Driven Content Suggestions (Natural Language Search)")
+        nl_q = st.text_input("e.g. 'Top 10 films in Manchester in the cinema Vue Printworks'").strip().lower()
+
+        nums = re.findall(r"\d+", nl_q)
+        top_n = int(nums[0]) if nums else 10
+
+        cities = sorted(df["cinema_city"].dropna().unique().tolist())
+        city = parse_entity(nl_q, cities)
+        if not city:
+            for c in cities:
+                if c.lower() in nl_q:
+                    city = c
+                    break
+
+        df_city = df[df["cinema_city"] == city] if city else df.copy()
+
+        cinemas = sorted(df_city["cinema_name"].dropna().unique().tolist())
+        cinema = parse_entity(nl_q, cinemas)
+        if not cinema:
+            for token in set(re.findall(r"\w+", nl_q)):
+                matches = [c for c in cinemas if token.lower() in c.lower()]
+                if matches:
+                    cinema = matches[0]
+                    break
+
+        df_final = df_city[df_city["cinema_name"] == cinema] if cinema else df_city
+
+        if "genre" in nl_q:
+            top_genres = (
+                df_final.groupby("film_genre")["total_sales"]
+                .mean()
+                .sort_values(ascending=False)
+                .head(top_n)
+            )
+            title = f"Top {top_n} Genres"
+            if city:
+                title += f" in {city}"
+            if cinema:
+                title += f" at {cinema}"
+            st.write(f"### {title} by Avg Revenue")
+            st.bar_chart(top_genres)
+
+        elif "film" in nl_q or "movie" in nl_q:
             top_films = (
-                df.groupby("film_title")["tickets_sold"]
+                df_final.groupby(film_col)["tickets_sold"]
                 .sum()
                 .sort_values(ascending=False)
-                .head(10)
+                .head(top_n)
             )
-            with st.expander("Top Ticket-Selling Films"):
-                st.bar_chart(top_films)
+            title = f"Top {top_n} Films"
+            if city:
+                title += f" in {city}"
+            if cinema:
+                title += f" at {cinema}"
+            st.write(f"### {title} by Tickets Sold")
+            st.bar_chart(top_films)
 
-        # Most Profitable Genres
-        if "film_genre" in df.columns:
-            top_genres = (
-                df.groupby("film_genre")["total_sales"]
-                .mean()
-                .sort_values(ascending=False)
-                .head(10)
-            )
-            with st.expander("Most Profitable Genres (Avg Revenue)"):
-                st.bar_chart(top_genres)
+        else:
+            st.info("Mention 'genre' or 'film/movie' and optionally 'top N', city, cinema.")
 
-        # Top Cast Members by Avg Revenue
-        with st.expander("Cast Members with Highest Avg Revenue"):
-            cast_df = df.copy()
-            cast_df["cast_top_5"] = cast_df["cast_top_5"].str.split(",")
-            exploded = cast_df.explode("cast_top_5")
-            exploded["cast_top_5"] = exploded["cast_top_5"].str.strip()
-
-            top_cast = (
-                exploded.groupby("cast_top_5")["total_sales"]
-                .mean()
-                .sort_values(ascending=False)
-                .head(10)
-                .rename("Avg Revenue (£)")
-                .reset_index()
-            )
-
-            st.dataframe(
-                top_cast.style.format({"Avg Revenue (£)": "£{:,.2f}"})
-            )

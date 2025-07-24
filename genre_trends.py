@@ -1,70 +1,118 @@
+import re
 import streamlit as st
-from utils import load_data
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.colors import Normalize
+import seaborn as sns   # ← added for palette
+
+from utils import load_data
+from nls_utils import parse_entity
 
 def run_trends():
     st.subheader("Genre Performance Insights")
-
     df = load_data()
-    df["total_sales"] = pd.to_numeric(df["total_sales"], errors="coerce")
-    df["tickets_sold"] = pd.to_numeric(df["tickets_sold"], errors="coerce")
-    df = df.dropna(subset=["film_genre", "total_sales", "tickets_sold"])
 
-    # ======================= SECTION 1 =======================
+    df["tickets_sold"] = pd.to_numeric(df["tickets_sold"], errors="coerce")
+    df["total_sales"]  = pd.to_numeric(df["total_sales"], errors="coerce")
+    df = df.dropna(subset=["film_genre", "tickets_sold", "total_sales", "cinema_city"])
+
+    # SECTION 1: Average Revenue per Genre
     with st.container():
         st.markdown("## Average Revenue per Genre")
-
         genre_sales = (
             df.groupby("film_genre")["total_sales"]
-            .mean()
-            .sort_values(ascending=True)
+              .mean()
+              .sort_values()
         )
-
-        top_n = st.slider("Show Top N Genres", min_value=5, max_value=20, value=10, key="top_n_genres")
+        top_n = st.slider("Show Top N Genres", 5, 20, 10)
         genre_sales = genre_sales.tail(top_n)
 
+        norm = Normalize(vmin=genre_sales.min(), vmax=genre_sales.max())
+        colors = plt.cm.Blues(norm(genre_sales.values))
+
         fig, ax = plt.subplots(figsize=(10, 6))
-        sns.barplot(x=genre_sales.values, y=genre_sales.index, ax=ax, palette="Blues_r")
+        ax.barh(
+            genre_sales.index,
+            genre_sales.values,
+            color=colors
+        )
         ax.set_xlabel("Average Revenue per Screening (£)")
         ax.set_ylabel("Genre")
-        ax.set_title(f"Top {top_n} Genres by Average Revenue")
-        ax.tick_params(axis="x", labelrotation=45)
+        ax.set_title(f"Top {top_n} Genres by Average Revenue", fontsize=14, pad=15)
         st.pyplot(fig)
 
-    # ======================= SECTION 2 =======================
+    # SECTION 2: Donut Chart for Top Genres by City
     with st.container():
-        st.markdown("## Top Genres by City")
+        st.markdown("## Top Genres by City (Natural Language Search)")
+        st.write("Type “Top 3 genres in London” or pick a city manually.")
 
-        cities = ["All"] + sorted(df["cinema_city"].dropna().unique())
-        selected_city = st.selectbox("Select City", cities, key="city_filter_pivot")
+        nl_query = st.text_input(
+            "Enter query",
+            placeholder="e.g. Top 7 genres in Manchester"
+        ).strip().lower()
+        cities = sorted(df["cinema_city"].unique())
+        city_manual = st.selectbox("Or select a city:", ["All"] + cities)
 
-        city_df = df.copy()
-        if selected_city != "All":
-            city_df = city_df[city_df["cinema_city"] == selected_city]
+        # Extract city via substring or fuzzy match
+        city_nls = None
+        if nl_query:
+            for c in cities:
+                if c.lower() in nl_query:
+                    city_nls = c
+                    break
+            if city_nls is None:
+                city_nls = parse_entity(nl_query, cities)
+        city = city_nls or city_manual
 
-        pivot = (
-            city_df.pivot_table(
-                index="cinema_city",
-                columns="film_genre",
-                values="tickets_sold",
-                aggfunc="sum"
-            )
-            .fillna(0)
-            .astype(int)
+        # Extract Top-N number
+        nums = re.findall(r"\d+", nl_query)
+        top_n_city = int(nums[0]) if nums else 10
+
+        df_city = df[df["cinema_city"] == city] if city != "All" else df.copy()
+        genre_counts = (
+            df_city.groupby("film_genre")["tickets_sold"]
+                   .sum()
+                   .sort_values(ascending=False)
+                   .head(top_n_city)
         )
 
-        if pivot.empty:
-            st.warning("No data available for this city.")
-        else:
-            st.markdown(
-                "This table shows how many tickets were sold for each genre, grouped by city. "
-                "The **yellow highlight** shows the most popular genre in each city."
-            )
+        if genre_counts.empty:
+            st.warning(f"No data for **{city}**")
+            return
 
-            styled = pivot.style \
-                .format("{:,}") \
-                .highlight_max(axis=1, props="background-color: #08306b;")
+        labels = genre_counts.index.tolist()
+        sizes  = genre_counts.values
 
-            st.dataframe(styled)
+        # Use a distinct Set3 palette
+        colors_city = sns.color_palette("Set3", n_colors=len(sizes))
+
+        fig, ax = plt.subplots(figsize=(8, 8))
+        wedges, _ = ax.pie(
+            sizes,
+            labels=None,
+            startangle=90,
+            colors=colors_city,
+            wedgeprops=dict(width=0.3, edgecolor='white')
+        )
+
+        # Annotate percentages
+        for i, w in enumerate(wedges):
+            ang = (w.theta2 - w.theta1) / 2. + w.theta1
+            x = 0.85 * np.cos(np.deg2rad(ang))
+            y = 0.85 * np.sin(np.deg2rad(ang))
+            pct = f"{sizes[i]/sizes.sum()*100:.1f}%"
+            ax.text(x, y, pct, ha="center", va="center", fontsize=10, color="#333")
+
+        ax.legend(
+            wedges,
+            labels,
+            title="Genres",
+            loc="center left",
+            bbox_to_anchor=(1, 0.5),
+            fontsize=9
+        )
+        ax.set_title(f"Top {top_n_city} Genres in {city}", y=1.08, fontsize=14)
+        ax.axis("equal")
+        st.pyplot(fig)
+

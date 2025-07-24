@@ -5,7 +5,6 @@ from recommender import run_recommender
 from cinema_performance import run_performance
 from genre_trends import run_trends
 
-
 def local_css():
     st.markdown("""
         <style>
@@ -25,14 +24,12 @@ def local_css():
         </style>
     """, unsafe_allow_html=True)
 
-
 local_css()
-
 st.set_page_config(page_title="Cinema Intelligence Dashboard", layout="wide")
 st.title("Cinema Intelligence Platform")
 
 with st.sidebar:
-    st.image("cinesense_analysis_navy_2_vector.png", width=400)
+    st.image("cinesense_analysis_navy_2_vector.png", width=300)
     st.markdown("### Welcome to CinemaSense Insights")
 
 menu = st.sidebar.selectbox("", [
@@ -45,15 +42,12 @@ menu = st.sidebar.selectbox("", [
 
 if menu == "Executive Summary":
     run_eda()
-
 elif menu == "Cinema & City Performance":
     run_performance()
-
 elif menu == "Genre & Film Trends":
     run_trends()
-
 elif menu == "Revenue Forecasting":
     run_forecast()
-
 elif menu == "Strategic Recommendations":
     run_recommender()
+
