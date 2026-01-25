@@ -14,7 +14,7 @@ def run_trends():
     df = load_data()
 
     df["tickets_sold"] = pd.to_numeric(df["tickets_sold"], errors="coerce")
-    df["total_sales"]  = pd.to_numeric(df["total_sales"], errors="coerce")
+    df["total_sales"] = pd.to_numeric(df["total_sales"], errors="coerce")
     df = df.dropna(subset=["film_genre", "tickets_sold", "total_sales", "cinema_city"])
 
     # SECTION 1: Average Revenue per Genre

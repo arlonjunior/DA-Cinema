@@ -5,18 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b45aaa01-a317-4991-976b-ea755efdcf84" name="Changes" comment="Commit :)">
-      <change afterPath="$PROJECT_DIR$/nls_utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/DA-CinemaSenseProject.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/DA-CinemaSenseProject.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cinema_performance.py" beforeDir="false" afterPath="$PROJECT_DIR$/cinema_performance.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset_cinema_sense.csv" beforeDir="false" afterPath="$PROJECT_DIR$/dataset_cinema_sense.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/eda.py" beforeDir="false" afterPath="$PROJECT_DIR$/eda.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/forecast.py" beforeDir="false" afterPath="$PROJECT_DIR$/forecast.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/genre_trends.py" beforeDir="false" afterPath="$PROJECT_DIR$/genre_trends.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/recommender.py" beforeDir="false" afterPath="$PROJECT_DIR$/recommender.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -135,7 +125,15 @@
       <option name="project" value="LOCAL" />
       <updated>1750696039992</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Commit :)">
+      <option name="closed" value="true" />
+      <created>1753397169029</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1753397169030</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
